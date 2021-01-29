@@ -1,5 +1,21 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssRxtractPlugin = require('mini-css-extract-plugin');
+
+// 选取最后一个值
+const mode = process.argv.slice(-1)[0];
+const isPro = mode === 'production';
+
+// cssloader对象
+const cssLoder = {
+  'production': {
+    loader: MiniCssRxtractPlugin.loader,
+  },
+  'development': {
+    loader: "style-loader"
+  }
+}
+
 module.exports = {
   entry: "./src/index.tsx",
   output: {
@@ -7,17 +23,37 @@ module.exports = {
     path: path.resolve(__dirname, "build")
   },
 
-  devtool: "source-map",
+  // 生产模式下关闭map文件
+  devtool: isPro ? "none" : "source-map",
 
   resolve: {
-    extensions: [".ts", ".tsx", ".js", ".json"]
+    extensions: [".ts", ".tsx", ".js", ".jsx", ".json"]
   },
 
   module: {
     rules: [
       {
         test: /\.css$/,
-        use: ['style-loader', 'css-loader']
+        use: [cssLoder[mode], {
+          loader: 'css-loader',
+        }]
+      },
+      {
+        test: /\.less$/,
+        use: [cssLoder[mode], {
+          loader: 'css-loader',
+        }, {
+          loader: 'less-loader',
+          options: {
+            lessOptions: {
+              modifyVars: {
+                "primary-color": "#009688",
+                "menu-item-active-bg": "#009688",
+              },
+              javascriptEnabled: true,
+            }
+          }
+        }]
       },
       {
         test: /\.jsx?$/, // jsx/js文件的正则
@@ -55,11 +91,6 @@ module.exports = {
         }]
       },
       {
-        test: /\.jsx?$/,
-        loader: 'babel-loader',
-        exclude: /node_modules/
-      },
-      {
         test: /\.svg$/,
         use: ['svg-inline-loader']
       },
@@ -77,6 +108,10 @@ module.exports = {
     new HtmlWebpackPlugin({
       filename: 'index.html',
       template: path.resolve(__dirname, './public/index.html'),
+    }),
+    new MiniCssRxtractPlugin({
+      filename: '[name].css',
+      chunkFilename: '[name].css'
     }),
   ],
   externals: {
