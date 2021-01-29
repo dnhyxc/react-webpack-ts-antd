@@ -1,20 +1,8 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const MiniCssRxtractPlugin = require('mini-css-extract-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
-// 选取最后一个值
-const mode = process.argv.slice(-1)[0];
-const isPro = mode === 'production';
-
-// cssloader对象
-const cssLoder = {
-  'production': {
-    loader: MiniCssRxtractPlugin.loader,
-  },
-  'development': {
-    loader: "style-loader"
-  }
-}
+const devMode = process.env.NODE_ENV !== 'production'
 
 module.exports = {
   entry: "./src/index.tsx",
@@ -24,7 +12,7 @@ module.exports = {
   },
 
   // 生产模式下关闭map文件
-  devtool: isPro ? "none" : "source-map",
+  // devtool: devMode ? "none" : "source-map",
 
   resolve: {
     extensions: [".ts", ".tsx", ".js", ".jsx", ".json"]
@@ -33,27 +21,25 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.css$/,
-        use: [cssLoder[mode], {
-          loader: 'css-loader',
-        }]
-      },
-      {
-        test: /\.less$/,
-        use: [cssLoder[mode], {
-          loader: 'css-loader',
-        }, {
-          loader: 'less-loader',
-          options: {
-            lessOptions: {
-              modifyVars: {
-                "primary-color": "#009688",
-                "menu-item-active-bg": "#009688",
-              },
-              javascriptEnabled: true,
+        test: /\.css|less$/,
+        use: [
+          devMode ? 'style-loader' : MiniCssExtractPlugin.loader,
+          {
+            loader: 'css-loader',
+          },
+          {
+            loader: 'less-loader',
+            options: {
+              lessOptions: {
+                modifyVars: {
+                  "primary-color": "#009688",
+                  "menu-item-active-bg": "#009688",
+                },
+                javascriptEnabled: true,
+              }
             }
           }
-        }]
+        ]
       },
       {
         test: /\.jsx?$/, // jsx/js文件的正则
@@ -101,15 +87,24 @@ module.exports = {
       {
         test: /\.svg/,
         use: ['file-loader']
-      }
+      },
+      // isPro ? null : {
+      //   enforce: "pre",
+      //   test: /\.js|ts|tsx$/,
+      //   loader: "source-map-loader"
+      // }
     ]
   },
   plugins: [
     new HtmlWebpackPlugin({
       filename: 'index.html',
       template: path.resolve(__dirname, './public/index.html'),
+      minify: {
+        removeComments: true, // 移除注释
+        collapseWhitespace: true, // 移除空格
+      }
     }),
-    new MiniCssRxtractPlugin({
+    new MiniCssExtractPlugin({
       filename: '[name].css',
       chunkFilename: '[name].css'
     }),
@@ -118,6 +113,7 @@ module.exports = {
     // "react": "React",
     // "react-dom": "ReactDOM"
   },
+  // mode: 'production',
   mode: 'development',
   devServer: {
     port: 9200,
