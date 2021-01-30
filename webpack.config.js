@@ -29,7 +29,7 @@ module.exports = {
       {
         test: /\.css|less$/,
         use: [
-          devMode ? 'style-loader' : MiniCssExtractPlugin.loader,
+          devMode ? MiniCssExtractPlugin.loader : 'style-loader',
           {
             loader: 'css-loader',
             options: {
@@ -54,7 +54,7 @@ module.exports = {
           },
           {
             loader: 'postcss-loader',
-          }
+          },
         ]
       },
       {
@@ -157,6 +157,7 @@ module.exports = {
     port: 9200,
     host: 'localhost',
     open: true,
+    hot: true,
     contentBase: path.resolve(__dirname, 'build'),
     watchContentBase: true,
     watchOptions: {

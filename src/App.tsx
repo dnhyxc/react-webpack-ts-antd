@@ -6,7 +6,7 @@ const App: React.FC = () => {
   return (
     <div className={styles.App}>
       <img src={icon} alt="" />
-      Appaaaaaaa
+      Appaaaaaaaqqqddd
     </div>
   );
 }
