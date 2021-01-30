@@ -1,8 +1,10 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 
 const devMode = process.env.NODE_ENV !== 'production'
+const matchSVGSprite = /assets\/icons\/|components\/Base\/Icon\/icons\//;
 
 module.exports = {
   entry: "./src/index.tsx",
@@ -15,7 +17,11 @@ module.exports = {
   // devtool: devMode ? "none" : "source-map",
 
   resolve: {
-    extensions: [".ts", ".tsx", ".js", ".jsx", ".json"]
+    extensions: [".ts", ".tsx", ".js", ".jsx", ".json"],
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '$': path.resolve(__dirname, './typings'),
+    },
   },
 
   module: {
@@ -26,6 +32,13 @@ module.exports = {
           devMode ? 'style-loader' : MiniCssExtractPlugin.loader,
           {
             loader: 'css-loader',
+            options: {
+              modules: {
+                mode: 'local',
+                localIdentName: '[name]__[local]--[hash:base64:5]',
+              },
+              importLoaders: 1,
+            }
           },
           {
             loader: 'less-loader',
@@ -38,6 +51,9 @@ module.exports = {
                 javascriptEnabled: true,
               }
             }
+          },
+          {
+            loader: 'postcss-loader',
           }
         ]
       },
@@ -78,16 +94,37 @@ module.exports = {
       },
       {
         test: /\.svg$/,
-        use: ['svg-inline-loader']
+        use: ['svg-inline-loader', 'raw-loader', 'file-loader']
+      },
+      {
+        test: /\.(mp4|png|jpg|jpeg|png|svg|cur|gif|webp|webm|otf)$/,
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              limit: 8192,
+              name: 'static/[name].[hash:11].[ext]',
+            },
+          },
+        ],
+        exclude: matchSVGSprite,
       },
       {
         test: /\.svg$/,
-        use: ['raw-loader']
+        include: matchSVGSprite,
+        use: [
+          {
+            loader: 'svg-sprite-loader',
+            options: {
+              symbolId: 'icon-[name]',
+            },
+          },
+        ],
       },
       {
-        test: /\.svg/,
-        use: ['file-loader']
-      },
+        test: /\.html$/,
+        loader: 'html-loader'
+      }
       // isPro ? null : {
       //   enforce: "pre",
       //   test: /\.js|ts|tsx$/,
@@ -108,6 +145,7 @@ module.exports = {
       filename: '[name].css',
       chunkFilename: '[name].css'
     }),
+    new OptimizeCSSAssetsPlugin(),
   ],
   externals: {
     // "react": "React",
@@ -117,7 +155,22 @@ module.exports = {
   mode: 'development',
   devServer: {
     port: 9200,
-    disableHostCheck: true,
-    historyApiFallback: true,
+    host: 'localhost',
+    open: true,
+    contentBase: path.resolve(__dirname, 'build'),
+    watchContentBase: true,
+    watchOptions: {
+      ignored: /node_modules/
+    },
+    compress: true,
+    clientLogLevel: 'none',
+    quiet: true,
+    overlay: false,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        '^api': ''
+      }
+    }
   }
 };

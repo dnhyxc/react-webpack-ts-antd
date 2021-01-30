@@ -1,9 +1,11 @@
 import React from 'react';
-import './App.less';
+import styles from './App.less';
+import icon from '@/assets/image/img1.jpg';
 
 const App: React.FC = () => {
   return (
-    <div className="App">
+    <div className={styles.App}>
+      <img src={icon} alt="" />
       Appaaaaaaa
     </div>
   );
